@@ -13,6 +13,18 @@
   color: "a2eeef"
   description: New feature or improvement request
 
+- name: documentation
+  color: "0075ca"
+  description: Improvements or additions to documentation
+
+- name: duplicate
+  color: "cfd3d7"
+  description: Already reported in another issue or pull request
+
+- name: question
+  color: "d876e3"
+  description: Not a bug or feature request — needs an answer, not a change
+
 - name: needs-clarification
   color: "fbca04"
   description: Triage Tech is waiting on more information from the submitter
