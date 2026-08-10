@@ -19,6 +19,23 @@ match the other in the same PR that changes behavior.
 | Output | One PR review per run: line comments + a summary verdict (Comment or Request Changes) |
 | Concurrency | One run per PR at a time; a new push cancels an in-flight run |
 
+## Division of labor with the Mechanical Critic
+
+The deterministic subset of the review is enforced with no model involved by
+[`.github/workflows/mechanical-critic.yml`](../../.github/workflows/mechanical-critic.yml):
+
+- PR description conforms to the template (required sections, non-empty,
+  linked issue present, checklist fully checked) — posts a sticky report
+  comment and fails the check until fixed
+- Rule 11 secret scanning via gitleaks
+
+The Code Critic treats these checks like any CI: red means an automatic
+"request changes," and it does not re-litigate their findings in line
+comments. Everything requiring judgment — scope vs. acceptance criteria,
+test adequacy, error handling, style — remains the Code Critic's job.
+The Mechanical Critic runs standalone, so the factory has a working review
+gate even when no model-backed reviewer is configured.
+
 ## Setup steps
 
 1. Create an API key in the [Warp dashboard](https://docs.warp.dev/agent-platform/cloud-agents/integrations/github-actions/)
