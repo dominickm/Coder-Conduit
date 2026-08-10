@@ -1,18 +1,18 @@
 # Code Critic — Warp Agent Configuration
 
 The PR Review Agent. This document is the source of truth for the Code
-Critic's behavior; the runtime that executes it is
-[`.github/workflows/code-critic.yml`](../../.github/workflows/code-critic.yml),
-which runs Warp's [`oz-agent-action`](https://github.com/warpdotdev/oz-agent-action)
-inside GitHub Actions. If the workflow and this file disagree, update one to
-match the other in the same PR that changes behavior.
+Critic's behavior. **No model-backed runtime is currently deployed** — the
+deterministic subset of the review is enforced today by the Mechanical Critic
+(see below), and this spec is ready to wire up when a runtime is chosen.
+Once a runtime exists, if it and this file disagree, update one to match the
+other in the same PR that changes behavior.
 
 ## Configuration summary
 
 | Setting | Value |
 | --- | --- |
 | Repository | `dominickm/Coder-Conduit` |
-| Runtime | `warpdotdev/oz-agent-action@v1` via `.github/workflows/code-critic.yml` |
+| Runtime | **None yet.** Candidates: a plain workflow step calling a model API directly, or a vendor agent action |
 | Trigger | Pull request **opened**, **reopened**, **synchronized**, or **ready for review** (drafts skipped) |
 | Also re-run on | A PR comment containing `@critic re-review` |
 | Permissions | `contents: read`, `pull-requests: write`, `issues: read`, `checks: read`. **No merge, no label, no push.** |
@@ -36,21 +36,23 @@ test adequacy, error handling, style — remains the Code Critic's job.
 The Mechanical Critic runs standalone, so the factory has a working review
 gate even when no model-backed reviewer is configured.
 
-## Setup steps
+## Deploying a runtime (when one is chosen)
 
-1. Create an API key in the [Warp dashboard](https://docs.warp.dev/agent-platform/cloud-agents/integrations/github-actions/)
-   and store it as a repository secret: `gh secret set WARP_API_KEY`.
-2. Merge the workflow to the default branch. Two trigger caveats until then:
-   - `pull_request` runs use the workflow from the PR's merge commit, so PRs
-     **targeting** a branch that has the workflow are covered;
-   - `issue_comment` (`@critic re-review`) only fires from the **default**
-     branch, so re-reviews work only after the workflow lands on `main`.
-3. The workflow instructs the agent to load this document's prompt from the
-   PR's *base* branch — never the PR's own copy — so a PR cannot rewrite its
-   reviewer. Behavior changes to the Critic therefore take effect only after
-   they merge.
+1. Pick the runtime: a plain GitHub Actions workflow step that calls a model
+   API directly (one key secret, no other dependencies), or a vendor agent
+   action. Store its API key with `gh secret set <NAME>`.
+2. Trigger it on the PR events in the configuration summary. Two GitHub
+   caveats: `pull_request` runs use the workflow from the PR's merge commit,
+   so PRs *targeting* a branch that has the workflow are covered; but
+   `issue_comment` (`@critic re-review`) only fires from the **default**
+   branch, so re-reviews work only after the workflow lands on `main`.
+3. The runtime must load this document's prompt from the PR's *base* branch —
+   never the PR's own copy — so a PR cannot rewrite its reviewer. Behavior
+   changes to the Critic therefore take effect only after they merge.
 4. Run the validation procedure at the bottom of this file before announcing
-   the factory is open.
+   the model-backed reviewer is live. (The Mechanical Critic's portion of that
+   procedure — the empty-description rejection and the Rule 11 token — is
+   already validated and enforced today.)
 
 ## Agent prompt
 
