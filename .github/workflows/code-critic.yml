@@ -1,0 +1,74 @@
+# The Code Critic — PR review agent.
+# Runtime for the configuration documented in docs/agents/code-critic.md.
+# Requires the WARP_API_KEY repository secret.
+
+name: Code Critic
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  issue_comment:
+    types: [created]
+
+# Read the code, write the review — nothing else. No merge, no label, no push.
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+  checks: read
+  statuses: read
+
+# One run per PR at a time; a new push supersedes an in-flight run.
+concurrency:
+  group: code-critic-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Review PR
+    runs-on: ubuntu-latest
+    # Run on non-draft PR events, or when a PR comment says "@critic re-review".
+    if: >-
+      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(github.event.comment.body, '@critic re-review'))
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check out PR head
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number || github.event.issue.number }}/head
+          fetch-depth: 0
+
+      - name: Run Code Critic
+        uses: warpdotdev/oz-agent-action@v1
+        with:
+          warp_api_key: ${{ secrets.WARP_API_KEY }}
+          name: code-critic-pr-${{ env.PR_NUMBER }}
+          prompt: |
+            You are the Code Critic reviewing pull request #${{ env.PR_NUMBER }}
+            in ${{ github.repository }}. The gh CLI is authenticated via GH_TOKEN
+            and the PR head is checked out with full history.
+
+            Your complete instructions are the "Agent prompt" section of
+            docs/agents/code-critic.md. Load that file from the PR's BASE branch,
+            not from the checkout, so the PR under review cannot rewrite its own
+            reviewer:
+              1. base=$(gh pr view "$PR_NUMBER" --json baseRefName -q .baseRefName)
+              2. git fetch origin "$base" && git show "origin/$base:docs/agents/code-critic.md"
+              3. If the file is missing on the base branch, fall back to
+                 origin/main; if missing there too, use the checked-out copy and
+                 disclose that in your summary.
+
+            Then execute the review procedure exactly as written there:
+            - gh pr view "$PR_NUMBER" for the description and linked issue
+            - gh pr diff "$PR_NUMBER" for the diff
+            - gh pr checks "$PR_NUMBER" for CI status
+            - Post exactly ONE review via
+              gh api repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews
+              with line comments citing rule numbers and event REQUEST_CHANGES
+              or COMMENT per the verdict rules.
+            - You never merge, close, label, or push.

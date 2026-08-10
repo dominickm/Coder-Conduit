@@ -1,28 +1,38 @@
 # Code Critic — Warp Agent Configuration
 
-The PR Review Agent. This document is the source of truth for how the Code
-Critic is configured on [Warp's Cloud Platform](https://docs.warp.dev/platform/).
-If the config in the Warp dashboard and this file disagree, update one to match
-the other in the same PR that changes behavior.
+The PR Review Agent. This document is the source of truth for the Code
+Critic's behavior; the runtime that executes it is
+[`.github/workflows/code-critic.yml`](../../.github/workflows/code-critic.yml),
+which runs Warp's [`oz-agent-action`](https://github.com/warpdotdev/oz-agent-action)
+inside GitHub Actions. If the workflow and this file disagree, update one to
+match the other in the same PR that changes behavior.
 
 ## Configuration summary
 
 | Setting | Value |
 | --- | --- |
 | Repository | `dominickm/Coder-Conduit` |
-| Trigger | Pull request **opened**, **reopened**, or **synchronized** (new commits pushed) |
-| Also re-run on | PR author comments `@critic re-review` |
-| Permissions | Read repo contents, read/write PR reviews and comments. **No merge, no label, no push.** |
+| Runtime | `warpdotdev/oz-agent-action@v1` via `.github/workflows/code-critic.yml` |
+| Trigger | Pull request **opened**, **reopened**, **synchronized**, or **ready for review** (drafts skipped) |
+| Also re-run on | A PR comment containing `@critic re-review` |
+| Permissions | `contents: read`, `pull-requests: write`, `issues: read`, `checks: read`. **No merge, no label, no push.** |
 | Output | One PR review per run: line comments + a summary verdict (Comment or Request Changes) |
-| Concurrency | One run per PR at a time; a new push supersedes an in-flight run |
+| Concurrency | One run per PR at a time; a new push cancels an in-flight run |
 
-## Setup steps (Warp dashboard)
+## Setup steps
 
-1. Create a new agent profile named **Code Critic**.
-2. Connect it to `dominickm/Coder-Conduit` with the permission scope above.
-3. Set the trigger events listed above.
-4. Paste the prompt below as the agent's instructions, verbatim.
-5. Run the validation procedure at the bottom of this file before announcing
+1. Create an API key in the [Warp dashboard](https://docs.warp.dev/agent-platform/cloud-agents/integrations/github-actions/)
+   and store it as a repository secret: `gh secret set WARP_API_KEY`.
+2. Merge the workflow to the default branch. Two trigger caveats until then:
+   - `pull_request` runs use the workflow from the PR's merge commit, so PRs
+     **targeting** a branch that has the workflow are covered;
+   - `issue_comment` (`@critic re-review`) only fires from the **default**
+     branch, so re-reviews work only after the workflow lands on `main`.
+3. The workflow instructs the agent to load this document's prompt from the
+   PR's *base* branch — never the PR's own copy — so a PR cannot rewrite its
+   reviewer. Behavior changes to the Critic therefore take effect only after
+   they merge.
+4. Run the validation procedure at the bottom of this file before announcing
    the factory is open.
 
 ## Agent prompt
