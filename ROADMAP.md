@@ -22,13 +22,13 @@ The agents can't operate on a repo that has nothing for them to parse. This
 phase adds every artifact the README already promises:
 
 - [x] `ROADMAP.md` — this document
-- [ ] Structured issue templates (`.github/ISSUE_TEMPLATE/`) — YAML issue forms,
+- [x] Structured issue templates (`.github/ISSUE_TEMPLATE/`) — YAML issue forms,
       so agent parsing is deterministic rather than best-effort
-- [ ] Pull request template (`.github/PULL_REQUEST_TEMPLATE.md`)
-- [ ] `CONTRIBUTING.md` — the human-facing workflow, including the label lifecycle
-- [ ] `GUIDELINES.md` — the code standards the Code Critic reviews against
-- [ ] `CODE_OF_CONDUCT.md` — backs the enforcement policy stated in the README
-- [ ] `.github/labels.yml` — declarative source of truth for the label set
+- [x] Pull request template (`.github/PULL_REQUEST_TEMPLATE.md`)
+- [x] `CONTRIBUTING.md` — the human-facing workflow, including the label lifecycle
+- [x] `GUIDELINES.md` — the code standards the Code Critic reviews against
+- [x] `CODE_OF_CONDUCT.md` — backs the enforcement policy stated in the README
+- [x] `.github/labels.yml` — declarative source of truth for the label set
 
 ## Phase 1 — Agent enablement
 

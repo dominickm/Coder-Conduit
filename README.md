@@ -40,6 +40,15 @@ We encourage the Coder Radio community to interact with the repository! To keep 
 
 ---
 
+## Project Documents
+
+* [`ROADMAP.md`](ROADMAP.md) — the path to Alpha and what "Alpha" means for this project
+* [`CONTRIBUTING.md`](CONTRIBUTING.md) — the full workflow, including the label lifecycle
+* [`GUIDELINES.md`](GUIDELINES.md) — the code standards the Code Critic enforces
+* [`.github/labels.yml`](.github/labels.yml) — the canonical label set
+
+---
+
 ## Code of Conduct
 
 Contributors must remain constructive. Any inappropriate behavior, trolling, or intentional attempts to "jailbreak" or spam the AI systems will result in immediate bans and closed PRs.
