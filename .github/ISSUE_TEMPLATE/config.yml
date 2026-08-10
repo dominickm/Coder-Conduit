@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Coder Radio
+    url: https://coder.show
+    about: General discussion about the show and this project belongs on the show's channels, not in issues.
