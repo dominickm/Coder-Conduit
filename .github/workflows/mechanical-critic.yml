@@ -1,0 +1,136 @@
+# The Mechanical Critic — deterministic PR checks, no model involved.
+# Enforces the machine-checkable subset of the review process:
+#   - PR description conforms to .github/PULL_REQUEST_TEMPLATE.md
+#   - a linked issue is present (Closes #N)
+#   - the checklist is fully checked
+#   - no committed secrets (GUIDELINES.md rule 11) via gitleaks
+# Judgment-level review (scope, tests, style) belongs to the Code Critic.
+
+name: Mechanical Critic
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: mechanical-critic-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  template:
+    name: PR template compliance
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    env:
+      # Untrusted input: only ever passed through env, never interpolated into scripts.
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Validate description against template
+        id: validate
+        shell: python
+        run: |
+          import os, re
+
+          body = os.environ.get("PR_BODY") or ""
+          # Strip HTML comments so template placeholder comments don't count as content.
+          stripped = re.sub(r"<!--.*?-->", "", body, flags=re.S)
+          failures = []
+
+          REQUIRED = ["Linked issue", "Summary", "Changes", "How it was tested", "Checklist"]
+
+          parts = re.split(r"^##\s+", stripped, flags=re.M)
+          sections = {}
+          for part in parts[1:]:
+              lines = part.splitlines()
+              sections[lines[0].strip()] = "\n".join(lines[1:]).strip()
+
+          for name in REQUIRED:
+              if name not in sections:
+                  failures.append(f"Missing required section: `## {name}`")
+
+          def has_content(text):
+              # A lone bullet marker or whitespace is not content.
+              return bool(re.search(r"[A-Za-z0-9]", re.sub(r"^\s*[-*]\s*$", "", text, flags=re.M)))
+
+          for name in ["Summary", "Changes", "How it was tested"]:
+              if name in sections and not has_content(sections[name]):
+                  failures.append(f"Section `## {name}` is empty")
+
+          if "Linked issue" in sections and not re.search(
+              r"(?i)\b(close[sd]?|fix(es|ed)?|resolve[sd]?)\s+#\d+", sections["Linked issue"]
+          ):
+              failures.append("No linked issue: `## Linked issue` must contain `Closes #<number>`")
+
+          if "Checklist" in sections:
+              boxes = re.findall(r"^\s*-\s*\[( |x|X)\]", sections["Checklist"], flags=re.M)
+              if not boxes:
+                  failures.append("Checklist section has no checkboxes")
+              elif " " in boxes:
+                  failures.append("Checklist has unchecked items")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"count={len(failures)}\n")
+              f.write("failures<<MECH_EOF\n")
+              for x in failures:
+                  f.write(f"- {x}\n")
+              f.write("MECH_EOF\n")
+
+          for x in failures:
+              print(f"FAIL: {x}")
+          if not failures:
+              print("PR description conforms to the template.")
+
+      - name: Post or update report comment
+        env:
+          COUNT: ${{ steps.validate.outputs.count }}
+          FAILURES: ${{ steps.validate.outputs.failures }}
+        run: |
+          marker="<!-- mechanical-critic-report -->"
+          if [ "$COUNT" = "0" ]; then
+            report="$marker
+          ### Mechanical Critic — ✅ template checks pass
+
+          The PR description conforms to the template. Guideline-level review is handled separately by the Code Critic."
+          else
+            report="$marker
+          ### Mechanical Critic — ❌ changes required
+
+          $FAILURES
+
+          Edit the PR description to match \`.github/PULL_REQUEST_TEMPLATE.md\` — this check re-runs automatically when the description changes."
+          fi
+
+          cid=$(gh api "repos/$GH_REPO/issues/$PR_NUMBER/comments" --paginate \
+            -q '.[] | select(.body | startswith("<!-- mechanical-critic-report -->")) | .id' | head -n1)
+          if [ -n "$cid" ]; then
+            gh api -X PATCH "repos/$GH_REPO/issues/comments/$cid" -f body="$report" >/dev/null
+          else
+            gh api -X POST "repos/$GH_REPO/issues/$PR_NUMBER/comments" -f body="$report" >/dev/null
+          fi
+
+      - name: Enforce
+        if: steps.validate.outputs.count != '0'
+        env:
+          COUNT: ${{ steps.validate.outputs.count }}
+        run: |
+          echo "PR description failed $COUNT template check(s); see the report comment." >&2
+          exit 1
+
+  secret-scan:
+    name: Secret scan (rule 11)
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
