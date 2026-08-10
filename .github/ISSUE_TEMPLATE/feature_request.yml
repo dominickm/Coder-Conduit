@@ -1,0 +1,58 @@
+name: Feature Request
+description: Propose an enhancement. Large requests are routed to the Staff Engineer for a spec before implementation.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form is parsed by the **Triage Tech** agent. Small, well-scoped
+        requests may be labeled for direct implementation; larger ones will be
+        routed to the **Staff Engineer** for spec-driven planning first.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem does this solve? Describe the need, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What you'd like to see happen. Be as concrete as you can.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Bullet points describing how we know this is done. Agents use these verbatim when implementing and reviewing.
+      placeholder: |
+        - Running `conduit --version` prints the semver version
+        - Exit code is 0
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: Estimated size
+      description: Your best guess — the Triage Tech will validate it.
+      options:
+        - Small (single focused change)
+        - Medium (a few files, no design decisions)
+        - Large (needs a spec from the Staff Engineer)
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I am not attempting to jailbreak, spam, or troll the agents.
+          required: true

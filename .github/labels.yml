@@ -1,0 +1,42 @@
+# Source of truth for the Coder Conduit label set.
+#
+# Only human maintainers and the Triage Tech agent may apply labels.
+# The Coder agent triggers strictly on `ready-to-implement`.
+# Sync to GitHub with a labeler action or `gh label` — do not hand-edit labels
+# in the GitHub UI without updating this file.
+
+- name: bug
+  color: "d73a4a"
+  description: Confirmed defect, reproducible from the issue report
+
+- name: enhancement
+  color: "a2eeef"
+  description: New feature or improvement request
+
+- name: needs-clarification
+  color: "fbca04"
+  description: Triage Tech is waiting on more information from the submitter
+
+- name: needs-spec
+  color: "5319e7"
+  description: Large request routed to the Staff Engineer for a specification
+
+- name: spec-approved
+  color: "0e8a16"
+  description: A maintainer has approved the Staff Engineer's spec
+
+- name: ready-to-implement
+  color: "0e8a16"
+  description: Approved for the Coder agent to pick up — maintainer/Triage Tech only
+
+- name: agent-generated
+  color: "bfdadc"
+  description: Issue drafted by the Architect agent's scheduled scan
+
+- name: invalid
+  color: "e4e669"
+  description: Malformed or off-template submission, auto-rejected
+
+- name: wontfix
+  color: "ffffff"
+  description: Declined by maintainers

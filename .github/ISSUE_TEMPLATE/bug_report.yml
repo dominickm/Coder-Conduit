@@ -1,0 +1,58 @@
+name: Bug Report
+description: Report a defect. The Triage Tech will read this form, so fill in every field.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Coder Conduit! This form is parsed by the
+        **Triage Tech** agent. Incomplete reports will get a clarification
+        request before any label is applied.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear, factual description of the defect.
+      placeholder: The CLI crashes when run with no arguments...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exact, numbered steps. Treat the agents like junior developers — leave nothing implied.
+      placeholder: |
+        1. Clone the repo
+        2. Run `...`
+        3. Observe the error
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, runtime versions, and anything else relevant.
+      placeholder: "Ubuntu 24.04, Node 22.6"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or output
+      description: Paste any error output. This will be rendered as code automatically.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I am not attempting to jailbreak, spam, or troll the agents.
+          required: true
